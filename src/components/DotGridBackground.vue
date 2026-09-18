@@ -58,7 +58,7 @@ let width = 0;
 let height = 0;
 let dots: Dot[] = [];
 let maxOffset = 0;
-let cellGap = config_.gap;
+let cellGap: number = config_.gap;
 let resizeObserver: ResizeObserver | null = null;
 
 // Pointer state, lerped for smooth trailing motion
