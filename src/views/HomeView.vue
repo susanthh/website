@@ -32,9 +32,39 @@
         <div class="about__text">
           <p v-for="(paragraph, i) in about" :key="i">{{ paragraph }}</p>
         </div>
-        <figure v-if="pfpUrl && !pfpFailed" class="about__pfp">
-          <img :src="pfpUrl" alt="Randomly chosen profile picture" @error="pfpFailed = true" />
-          <figcaption aria-hidden="true">~/pfps/{{ pfpName }}</figcaption>
+        <figure v-if="currentPfp" class="about__pfp">
+          <button
+            class="about__pfp-image-btn"
+            type="button"
+            @click="nextPfp"
+            :aria-label="pfps.length > 1 ? 'Next profile picture' : 'Profile picture'"
+          >
+            <img
+              :src="currentPfp.url"
+              :alt="`Profile picture ${currentIndex + 1} of ${pfps.length}`"
+              @error="removeCurrentPfp"
+            />
+          </button>
+          <figcaption aria-hidden="true">~/pfps/{{ currentPfp.name }}</figcaption>
+          <div v-if="pfps.length > 1" class="pfp-controls">
+            <button class="pfp-nav" type="button" @click="prevPfp" aria-label="Previous profile picture">
+              prev
+            </button>
+            <div class="pfp-dots" role="tablist" aria-label="Profile pictures">
+              <button
+                v-for="(_, i) in pfps"
+                :key="i"
+                class="pfp-dot"
+                :class="{ 'pfp-dot--active': i === currentIndex }"
+                type="button"
+                role="tab"
+                :aria-selected="i === currentIndex"
+                :aria-label="`View profile picture ${i + 1}`"
+                @click="goToPfp(i)"
+              />
+            </div>
+            <button class="pfp-nav" type="button" @click="nextPfp" aria-label="Next profile picture">next</button>
+          </div>
         </figure>
       </div>
     </section>
@@ -46,24 +76,49 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import TypewriterText from "../components/TypewriterText.vue";
 import SocialButton from "../components/SocialButton.vue";
 import { about, intro, socials, tagline, githubUrl } from "../config";
 
-/**
- * Every image dropped into src/assets/pfps gets picked up at build time;
- * one is chosen at random per page load and shown in the about section.
- */
+/** Every image dropped into src/assets/pfps is loaded into a clickable mini gallery. */
 const pfpModules = import.meta.glob<{ default: string }>(
   "../assets/pfps/*.{png,jpg,jpeg,gif,webp,avif,svg}",
   { eager: true },
 );
-const pfpEntries = Object.entries(pfpModules);
-const pickedPfp = pfpEntries[Math.floor(Math.random() * pfpEntries.length)];
-const pfpUrl = pickedPfp?.[1].default ?? "";
-const pfpName = pickedPfp?.[0].split("/").pop() ?? "";
-const pfpFailed = ref(false);
+const pfps = ref(
+  Object.entries(pfpModules)
+    .map(([path, mod]) => ({
+      url: mod.default,
+      name: path.split("/").pop() ?? "image",
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name)),
+);
+const currentIndex = ref(0);
+const currentPfp = computed(() => pfps.value[currentIndex.value] ?? null);
+
+const nextPfp = () => {
+  if (pfps.value.length < 2) return;
+  currentIndex.value = (currentIndex.value + 1) % pfps.value.length;
+};
+
+const prevPfp = () => {
+  if (pfps.value.length < 2) return;
+  currentIndex.value = (currentIndex.value - 1 + pfps.value.length) % pfps.value.length;
+};
+
+const goToPfp = (index: number) => {
+  if (index < 0 || index >= pfps.value.length) return;
+  currentIndex.value = index;
+};
+
+const removeCurrentPfp = () => {
+  if (!pfps.value.length) return;
+  pfps.value.splice(currentIndex.value, 1);
+  if (currentIndex.value >= pfps.value.length) {
+    currentIndex.value = 0;
+  }
+};
 
 /** Reveal the rest of the hero once the typewriter has had time to finish. */
 const revealed = ref(false);
@@ -177,6 +232,15 @@ onMounted(() => {
   box-shadow: 0 0 18px var(--green-glow-soft), 0 12px 30px rgba(0, 0, 0, 0.55);
 }
 
+.about__pfp-image-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .about__pfp img {
   display: block;
   width: 100%;
@@ -191,6 +255,53 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.pfp-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.pfp-nav {
+  border: 1px solid var(--line);
+  background: var(--bg-input);
+  color: var(--green);
+  font-family: var(--font);
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0.35rem 0.45rem;
+  cursor: pointer;
+}
+
+.pfp-nav:hover {
+  background: var(--green-glow-soft);
+  border-color: var(--green);
+}
+
+.pfp-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.pfp-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-input);
+  padding: 0;
+  cursor: pointer;
+}
+
+.pfp-dot--active {
+  background: var(--green);
+  border-color: var(--green);
+  box-shadow: 0 0 8px var(--green-glow);
 }
 
 /* --- footer ------------------------------------------------------------ */
@@ -208,6 +319,10 @@ onMounted(() => {
     padding-top: 1.5rem;
   }
 
+  .hero__window {
+    min-height: auto;
+  }
+
   .hero__body {
     padding: 1.4rem 1.1rem 1.6rem;
   }
@@ -218,7 +333,29 @@ onMounted(() => {
 
   .about__pfp {
     align-self: center;
-    width: 160px;
+    width: min(220px, 100%);
+  }
+
+  .hero__actions .btn,
+  .hero__actions :deep(.btn) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pfp-nav {
+    font-size: 0.66rem;
+    padding: 0.35rem 0.4rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero__headline {
+    font-size: 1.7rem;
+  }
+
+  .footer {
+    padding-top: 2rem;
+    font-size: 0.78rem;
   }
 }
 </style>

@@ -20,16 +20,14 @@ import { onBeforeUnmount, onMounted, ref } from "vue";
 
 const config = {
   gap: 40, // px between dots (and size of each dot's domain cell)
-  baseRadius: 1.3, // resting dot radius
-  maxRadius: 4.6, // dot radius right under the cursor
-  radiusRange: 200, // px — how far the strong influence reaches
-  glowRange: 340, // px — faint reach before hard falloff
+  baseRadius: 1.25, // resting dot radius
+  maxRadius: 3.2, // dot radius right under the cursor
+  radiusRange: 150, // px — brighter/stronger influence near cursor
+  glowRange: 320, // px — faint reach before hard falloff
   cellMargin: 4, // px kept between a displaced dot and its cell edge
   stiffness: 0.12, // spring pull toward the target offset
-  damping: 0.8, // velocity damping (< 1 = springy wobble)
-  lineRange: 170, // px — dots inside this range get a line to the cursor
-  lineAlpha: 0.45, // max line brightness
-  shimmer: 0.22, // resting alpha
+  damping: 0.82, // velocity damping (< 1 = springy wobble)
+  shimmer: 0.28, // resting alpha
   shimmerSpeed: 0.00055,
   color: "34, 255, 85", // rgb
   ghostAlpha: 0.1, // motion-blur ghost left behind moving dots
@@ -59,7 +57,8 @@ let lastFrame = 0;
 let width = 0;
 let height = 0;
 let dots: Dot[] = [];
-let maxOffset = config_.gap / 2 - config_.cellMargin;
+let maxOffset = 0;
+let cellGap: number = config_.gap;
 let resizeObserver: ResizeObserver | null = null;
 
 // Pointer state, lerped for smooth trailing motion
@@ -85,8 +84,8 @@ const onPointerLeave = () => {
 
 const buildDots = () => {
   dots = [];
-  for (let x = 0; x <= width; x += config_.gap) {
-    for (let y = 0; y <= height; y += config_.gap) {
+  for (let x = 0; x <= width; x += cellGap) {
+    for (let y = 0; y <= height; y += cellGap) {
       dots.push({
         hx: x,
         hy: y,
@@ -119,7 +118,8 @@ const resize = () => {
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  maxOffset = config_.gap / 2 - config_.cellMargin;
+  cellGap = width <= 640 ? 32 : config_.gap;
+  maxOffset = Math.max(4, cellGap * 0.22 - config_.cellMargin);
   buildDots();
   ctx.fillStyle = "rgb(5, 8, 5)";
   ctx.fillRect(0, 0, width, height);
@@ -138,7 +138,7 @@ const frame = (t: number) => {
   ctx.fillStyle = "rgb(5, 8, 5)";
   ctx.fillRect(0, 0, width, height);
 
-  const { glowRange, maxRadius, baseRadius, stiffness, damping } = config_;
+  const { glowRange, radiusRange, maxRadius, baseRadius, stiffness, damping } = config_;
   const phase = t * config_.shimmerSpeed;
   const { x: cx, y: cy, active } = pointer;
 
@@ -155,8 +155,8 @@ const frame = (t: number) => {
       const dy = cy - dot.hy;
       const dist = Math.hypot(dx, dy);
       if (dist < glowRange) {
-        const proximity = 1 - dist / glowRange;
-        pull = Math.pow(proximity, 2.2);
+        const moveProximity = Math.max(0, 1 - dist / radiusRange);
+        pull = Math.pow(moveProximity, 2) * 0.7;
         if (dist > 0.001) {
           // strain toward the cursor, capped at the cell boundary
           const reach = maxOffset * pull;
@@ -190,9 +190,15 @@ const frame = (t: number) => {
       config_.shimmer * 0.7 * Math.sin(phase + dot.hx * 0.008 + dot.hy * 0.011);
     let radius = baseRadius;
 
-    if (active && pull > 0) {
-      alpha = Math.min(1, alpha + pull * 1.1);
-      radius = baseRadius + (maxRadius - baseRadius) * pull;
+    if (active) {
+      const distToCursor = Math.hypot(cx - dot.hx, cy - dot.hy);
+      const glowProximity = Math.max(0, 1 - distToCursor / glowRange);
+      if (glowProximity > 0) {
+        alpha = Math.min(1, alpha + Math.pow(glowProximity, 2.2) * 1.35);
+      }
+      if (pull > 0) {
+        radius = baseRadius + (maxRadius - baseRadius) * pull;
+      }
     }
     dot._pull = pull;
 
@@ -212,26 +218,6 @@ const frame = (t: number) => {
     dot._px = px;
     dot._py = py;
     dot._pr = radius;
-  }
-
-  // glowing threads from the closest dots to the cursor
-  if (active) {
-    const { lineRange, lineAlpha } = config_;
-    ctx.lineWidth = 1;
-    for (const dot of dots) {
-      if (!dot._pull) continue;
-      const dxp = dot.hx + dot.ox;
-      const dyp = dot.hy + dot.oy;
-      const dist = Math.hypot(cx - dxp, cy - dyp);
-      if (dist < lineRange) {
-        const lineEase = Math.pow(1 - dist / lineRange, 1.5);
-        ctx.globalAlpha = lineAlpha * lineEase;
-        ctx.beginPath();
-        ctx.moveTo(dxp, dyp);
-        ctx.lineTo(cx, cy);
-        ctx.stroke();
-      }
-    }
   }
 
   ctx.globalAlpha = 1;
