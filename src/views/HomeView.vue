@@ -34,7 +34,7 @@
         </div>
         <figure v-if="pfpUrl && !pfpFailed" class="about__pfp">
           <img :src="pfpUrl" alt="Randomly chosen profile picture" @error="pfpFailed = true" />
-          <figcaption aria-hidden="true">~/pfps/{{ pfpName }}</figcaption>
+          <figcaption aria-hidden="true">@endgamewilham</figcaption>
         </figure>
       </div>
     </section>
@@ -62,7 +62,6 @@ const pfpModules = import.meta.glob<{ default: string }>(
 const pfpEntries = Object.entries(pfpModules);
 const pickedPfp = pfpEntries[Math.floor(Math.random() * pfpEntries.length)];
 const pfpUrl = pickedPfp?.[1].default ?? "";
-const pfpName = pickedPfp?.[0].split("/").pop() ?? "";
 const pfpFailed = ref(false);
 
 /** Reveal the rest of the hero once the typewriter has had time to finish. */
