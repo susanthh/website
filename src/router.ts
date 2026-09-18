@@ -7,9 +7,10 @@ import NotFoundView from "./views/NotFoundView.vue";
  * single HTML file, so it needs hash history. The real build uses clean URLs.
  */
 const useHash = import.meta.env.VITE_ROUTER_MODE === "hash";
+const base = import.meta.env.BASE_URL;
 
 const router = createRouter({
-  history: useHash ? createWebHashHistory() : createWebHistory(),
+  history: useHash ? createWebHashHistory(base) : createWebHistory(base),
   routes: [
     { path: "/", name: "home", component: HomeView },
     { path: "/:pathMatch(.*)*", name: "not-found", component: NotFoundView },
