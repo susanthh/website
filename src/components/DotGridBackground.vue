@@ -7,9 +7,9 @@
  * Full-viewport grid of dots that reacts to the cursor.
  *
  * Each dot lives at a fixed home position on the grid. Near the cursor it
- * brightens and swells, and it strains toward the cursor on a spring —
- * chasing it as it moves, wobbling home when it leaves. The drift is
- * clamped well under one grid cell so the grid never loses its shape.
+ * brightens toward a dim white, swells slightly, and eases toward the
+ * cursor on a soft spring — drifting at most a few pixels, so the grid
+ * never loses its shape.
  *
  * Tuning knobs live in the CONFIG block below.
  */
@@ -18,14 +18,15 @@ import { onBeforeUnmount, onMounted, ref } from "vue";
 const CONFIG = {
   gap: 36, // px between dots
   baseRadius: 1.3, // resting dot radius (px)
-  maxRadius: 3, // dot radius right under the cursor (px)
+  maxRadius: 2.6, // dot radius right under the cursor (px)
   reach: 220, // px — how far the cursor's influence extends
-  maxDrift: 10, // px — furthest a dot may leave its home
-  stiffness: 0.14, // spring pull toward the cursor
-  damping: 0.8, // < 1 => springy overshoot/wobble
+  maxDrift: 6, // px — furthest a dot may leave its home
+  stiffness: 0.1, // spring pull toward the cursor
+  damping: 0.9, // closer to 1 = calmer, less wobble
   baseAlpha: 0.22, // resting dot brightness
-  glowAlpha: 0.9, // extra brightness at the cursor's center
-  color: "34, 255, 85", // theme green, rgb
+  glowAlpha: 0.7, // extra brightness at the cursor's center (kept dim)
+  color: "34, 255, 85", // resting dot color, rgb
+  hotColor: "205, 215, 208", // highlight color near the cursor: dim white, rgb
 } as const;
 
 interface Dot {
@@ -111,7 +112,7 @@ const frame = () => {
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = `rgb(${CONFIG.color})`;
 
-  const { reach, maxDrift, stiffness, damping, baseAlpha, glowAlpha } = CONFIG;
+  const { reach, maxDrift, stiffness, damping, baseAlpha, glowAlpha, color, hotColor } = CONFIG;
   const cx = cursor.x;
   const cy = cursor.y;
 
@@ -154,10 +155,21 @@ const frame = () => {
     const alpha = Math.min(1, baseAlpha * dot.bright + glowAlpha * pull);
     const radius = CONFIG.baseRadius + (CONFIG.maxRadius - CONFIG.baseRadius) * pull;
 
+    if (pull > 0.02) {
+      // blend green -> dim white as the dot lights up
+      const c1 = color.split(", ");
+      const c2 = hotColor.split(", ");
+      ctx.fillStyle = `rgb(${Math.round(+c1[0] + (+c2[0] - +c1[0]) * pull)}, ${Math.round(
+        +c1[1] + (+c2[1] - +c1[1]) * pull,
+      )}, ${Math.round(+c1[2] + (+c2[2] - +c1[2]) * pull)})`;
+    }
     ctx.globalAlpha = alpha;
     ctx.beginPath();
     ctx.arc(dot.hx + dot.ox, dot.hy + dot.oy, radius, 0, Math.PI * 2);
     ctx.fill();
+    if (pull > 0.02) {
+      ctx.fillStyle = `rgb(${color})`;
+    }
   }
 
   ctx.globalAlpha = 1;
