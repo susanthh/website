@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#050805" />
+    <meta name="robots" content="index, follow" />
+    <!-- Keep in sync with `description` in src/config.ts -->
+    <meta
+      name="description"
+      content="Personal website of a software developer and long-time Linux user. Projects live on GitHub."
+    />
+    <meta property="og:title" content="Home" />
+    <meta
+      property="og:description"
+      content="Personal website of a software developer and long-time Linux user. Projects live on GitHub."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Home</title>
+    <!-- pre-paint the dark background so there is no white flash -->
+    <style>
+      html {
+        background: #050805;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

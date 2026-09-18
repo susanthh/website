@@ -1,0 +1,168 @@
+/* ------------------------------------------------------------------ */
+/*  Terminal theme — green on black                                    */
+/* ------------------------------------------------------------------ */
+
+:root {
+  /* colors */
+  --bg: #050805;
+  --bg-raised: #0a120a;
+  --bg-input: #0d1a0d;
+  --green: #22ff55;
+  --green-dim: #17c93f;
+  --green-faint: #0f7a2a;
+  --green-glow: rgba(34, 255, 85, 0.35);
+  --green-glow-soft: rgba(34, 255, 85, 0.16);
+  --amber: #ffb000;
+  --text: #a8e6b0;
+  --text-dim: #4d8a5c;
+  --line: rgba(34, 255, 85, 0.22);
+  --line-soft: rgba(34, 255, 85, 0.1);
+
+  /* type */
+  --font: "JetBrains Mono", "Cascadia Code", "Source Code Pro", "Fira Code",
+    ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --scan-opacity: 0.04;
+  --vignette-opacity: 0.35;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-color: var(--green-faint) var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* CRT scanlines + vignette overlay, sits above everything but never blocks input */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, var(--scan-opacity)) 3px
+  );
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0) 55%,
+    rgba(0, 0, 0, calc(var(--vignette-opacity) * 0.9)) 100%
+  );
+}
+
+::selection {
+  background: var(--green);
+  color: #031003;
+}
+
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* --- links ---------------------------------------------------------- */
+
+a {
+  color: var(--green);
+  text-decoration: none;
+}
+
+a:hover {
+  text-shadow: 0 0 8px var(--green-glow);
+}
+
+/* --- buttons -------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1.15rem;
+  font-family: var(--font);
+  font-size: 0.95rem;
+  color: var(--green);
+  background: transparent;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover {
+  background: var(--green-glow-soft);
+  border-color: var(--green);
+  box-shadow: 0 0 18px var(--green-glow-soft), inset 0 0 12px var(--green-glow-soft);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--primary {
+  background: var(--green);
+  color: #031003;
+  border-color: var(--green);
+  font-weight: 700;
+}
+
+.btn--primary:hover {
+  background: #4dff77;
+  box-shadow: 0 0 24px var(--green-glow), 0 0 60px var(--green-glow-soft);
+}
+
+/* --- shared layout helpers ------------------------------------------ */
+
+.section {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+.section__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  margin: 0 0 1.25rem;
+}
+
+.section__title .prompt {
+  color: var(--green);
+  text-shadow: 0 0 8px var(--green-glow);
+}
+
+.card {
+  border: 1px solid var(--line-soft);
+  background: var(--bg-raised);
+  padding: 1.5rem 1.75rem;
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: 2rem 1.1rem;
+  }
+}
