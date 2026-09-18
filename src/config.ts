@@ -40,11 +40,11 @@ export const socials: Social[] = [
   },
   {
     label: "Email",
-    url: "mailto:you@example.com",
+    url: "cpsusanth2009@gmail.com",
     icon: "M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7l9 6 9-6",
   },
 ];
 
 /** SEO/OG description — keep in sync with index.html. */
 export const description =
-  "Personal website of a software developer and long-time Linux user. Projects live on GitHub.";
+  "my very own website lol";
