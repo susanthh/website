@@ -45,7 +45,7 @@
               @error="removeCurrentPfp"
             />
           </button>
-          <figcaption aria-hidden="true">~/pfps/{{ currentPfp.name }}</figcaption>
+          <figcaption aria-hidden="true">me!</figcaption>
           <div v-if="pfps.length > 1" class="pfp-controls">
             <button class="pfp-nav" type="button" @click="prevPfp" aria-label="Previous profile picture">
               prev
