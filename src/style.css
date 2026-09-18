@@ -30,6 +30,13 @@
   box-sizing: border-box;
 }
 
+/* #app is its own stacking context, so the dot-grid canvas inside it at
+   z-index -1 paints above the body background but below all content. */
+#app {
+  position: relative;
+  z-index: 0;
+}
+
 html {
   scrollbar-color: var(--green-faint) var(--bg);
 }
